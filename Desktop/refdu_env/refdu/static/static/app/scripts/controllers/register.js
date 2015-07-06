@@ -8,17 +8,17 @@
  * Controller of the sampleAppApp
  */
 angular.module('sampleAppApp')
-  .controller('indexCtrl',function ($scope, $http, $rootScope) {
-    console.log($scope.csrf_token)
-  })
   .controller('registerCtrl',function ($scope, $http) {
     console.log('registerCtrl');
+    $scope.registration_status = " ";
      $scope.services = [
         {ServiceID: 'cu', ServiceName: 'Customer'},
         {ServiceID: 'co', ServiceName: 'Company'},
     ];
 
     $scope.doRegister = function(){
+        $scope.registration_status = "  ";
+        $scope.registration_error = "";
         console.log($scope.ServiceID)
         if($scope.formData.password && $scope.formData.email && $scope.ServiceID){
           $http({
@@ -34,7 +34,12 @@ angular.module('sampleAppApp')
             },
         })
         .success(function (out) {
-           console.log(out)
+           if(out.status == 200){
+                $scope.registration_status = true;
+           }else{
+                $scope.registration_status = false;
+                $scope.registration_error = out.error;
+           }
         })
         .error(function (data, status) {
 
@@ -44,9 +49,7 @@ angular.module('sampleAppApp')
         }
     }
 })
-  .constant("CSRF_TOKEN", '{{ csrf_token() }}')
-
-  .directive('backImg', function(){
+.directive('backImg', function(){
     return function(scope, element, attrs){
         var url = attrs.backImg;
         element.css({

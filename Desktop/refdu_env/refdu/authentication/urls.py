@@ -6,4 +6,5 @@ from views import *
 
 urlpatterns = patterns('authentication.views',
     url(r'^register$', Register.as_view()),
+    url(r'^login$', Login.as_view()),
 )

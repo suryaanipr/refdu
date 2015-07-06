@@ -37,6 +37,15 @@ angular
             templateUrl: 'static/app/views/register.html',
             controller: 'registerCtrl'
           })
+           .when('/company', {
+            templateUrl: 'static/app/views/company.html',
+            
+
+          })
+           .when('/customer', {
+            templateUrl: 'static/app/views/customer.html',
+
+          })
           .otherwise({
             redirectTo: '/'
           });

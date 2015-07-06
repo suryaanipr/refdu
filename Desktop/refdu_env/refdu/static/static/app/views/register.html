@@ -12,8 +12,7 @@
 							<br/><br/>
 							<form class="form floating-label" name="myForm"
                                   accept-charset="utf-8" method="post">
-                                {% csrf_token %}
-								<div class="form-group">
+                                <div class="form-group">
 									<input type="email" class="form-control"  name="email" id="email"
                                            ng-model="formData.email" required="">
 									<label for="email">Email</label>
@@ -78,6 +77,13 @@
 									</div><!--end .col -->
 								</div><!--end .row -->
 							</form>
+                            <div ng-if="registration_status == true">
+                                successfully registered please <b><a href="#/">login</a></b>
+                            </div>
+                            <div ng-if="registration_status == false">
+                                [[ registration_error ]]
+                            </div>
+
 						</div><!--end .col -->
 					</div><!--end .card -->
 				</section>
