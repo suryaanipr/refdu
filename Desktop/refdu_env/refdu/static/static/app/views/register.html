@@ -10,30 +10,71 @@
 							<br/>
 							<span class="text-lg text-bold text-primary">REGISTER HERE</span>
 							<br/><br/>
-							<form class="form floating-label" action="../../html/dashboards/dashboard.html"
+							<form class="form floating-label" name="myForm"
                                   accept-charset="utf-8" method="post">
+                                {% csrf_token %}
 								<div class="form-group">
-									<input type="text" class="form-control" id="username" name="username">
-									<label for="username">Username</label>
-								</div>
-								<div class="form-group">
-									<input type="password" class="form-control" id="password" name="password">
-									<label for="password">Password</label>
+									<input type="email" class="form-control"  name="email" id="email"
+                                           ng-model="formData.email" required="">
+									<label for="email">Email</label>
+                                          <span style="color:red" ng-show="myForm.email.$dirty && myForm.email.$invalid">
+                                          <span ng-show="myForm.email.$error.required">Email is required.</span>
+                                          <span ng-show="myForm.email.$error.email">Invalid email address.</span>
+                                          </span>
+                                    </div>
 
+								<div class="form-group">
+									<input class="form-control" type="password" id="password" name="password"
+                                           ng-model="formData.password"
+                                           ng-minlength="5" ng-maxlength="20" required >
+									<label for="password">Password</label>
 								</div>
+
+                                <span ng-show="myForm.password.$error.required && myForm.password.$dirty">required</span>
+                                   <span ng-show="!myForm.password.$error.required && (myForm.password.$error.minlength ||
+                                    myForm.password.$error.maxlength) && myForm.password.$dirty">
+                                       Passwords must be between 5 and 20 characters.</span>
+                                   <!--<span ng-show="!myForm.password.$error.required &&
+                                   !myForm.password.$error.minlength && !myForm.password.$error.maxlength &&
+                                   myForm.password.$error.pattern && myForm.password.$dirty">
+                                       Must contain one lower &amp; uppercase letter, and one non-alpha character
+                                       (a number or a symbol.)
+                                   </span>-->
+                                <br />
+
+
                                 <div class="form-group">
-                                    <input list="hosting-plan" type="text" value="select" class="form-control" >
-                                        <datalist id="hosting-plan">
-                                           <option value="small">one</option>
-                                           <option value="medium">two</option>
-                                           <option value="large">three</option>
-                                        </datalist>
+                                    <input type="password" class="form-control" id="password_c" name="password_c"
+                                           ng-model="formData.password_c" valid-password-c="[[formData.password===formData.password_c]]"
+                                           required  />
+                                    <label for="password_c">Re-Password</label>
+                                    <span ng-show="myForm.password_c.$error.required && myForm.password_c.$dirty">
+                                        Please confirm your password.
+                                    </span>
+                                    <span ng-show="!myForm.password_c.$error.required &&
+                                        myForm.password_c.$error.noMatch
+                                        && myForm.password.$dirty">
+                                        Passwords do not match.
+                                    </span>
+                                    <br />
+                                </div>
+
+                                <div class="form-group">
+                                      <select name="service_id" class="form-control" style="width: 220px;"
+                                              ng-model="ServiceID"
+                                              ng-options="service.ServiceID as service.ServiceName
+                                              for service in services"
+                                              required>
+                                        <option value="">Select Service</option>
+                                      </select>
+                                      <span ng-show="myForm.service_id.$error.required">Select service</span>
                                 </div>
 
 								<br/>
 								<div class="row">
-									<div class="col-xs-6 text-right">
-										<button class="btn btn-primary btn-raised" type="submit">register</button>
+									<div class="col-xs-6 text-right" >
+										<button class="btn btn-primary btn-raised" ng-disabled="!myForm.$valid"
+                                                type="submit" ng-click="doRegister()">register</button>
 									</div><!--end .col -->
 								</div><!--end .row -->
 							</form>
