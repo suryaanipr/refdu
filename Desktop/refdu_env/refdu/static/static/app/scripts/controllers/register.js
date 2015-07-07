@@ -8,46 +8,41 @@
  * Controller of the sampleAppApp
  */
 angular.module('sampleAppApp')
-  .controller('registerCtrl',function ($scope, $http) {
+  .controller('registerCtrl',function ($scope, $http, $auth, $rootScope, $location) {
     console.log('registerCtrl');
     $scope.registration_status = " ";
-     $scope.services = [
+
+   $scope.logout = function(){
+        $auth.logout();
+   }
+   console.log($auth.getToken())
+   $scope.services = [
         {ServiceID: 'cu', ServiceName: 'Customer'},
         {ServiceID: 'co', ServiceName: 'Company'},
-    ];
+   ];
 
-    $scope.doRegister = function(){
+   $scope.doRegister = function(){
         $scope.registration_status = "  ";
         $scope.registration_error = "";
         console.log($scope.ServiceID)
         if($scope.formData.password && $scope.formData.email && $scope.ServiceID){
-          $http({
-            method: 'POST',
-            url: '/auth/register',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data: {
-                'email' : $scope.formData.email,
-                'password': $scope.formData.password,
-                'account_type': $scope.ServiceID
-            },
-        })
-        .success(function (out) {
-           if(out.status == 200){
-                $scope.registration_status = true;
-           }else{
-                $scope.registration_status = false;
-                $scope.registration_error = out.error;
-           }
-        })
-        .error(function (data, status) {
-
-        });
-        }else{
-            console.log('value missing')
+             $auth.signup({
+                    email: $scope.formData.email,
+                    password: $scope.formData.password,
+                    account_type: $scope.ServiceID,
+                    password_change: false
+            }).then(function(response) {
+                if(response.status == 200){
+                    $auth.setToken(response.data.token);
+                    $rootScope.email = response.data.email;
+                    $rootScope.role = response.data.role;
+                    $location.path('/home')
+                }
+            });
         }
-    }
+   }
+
+
 })
 .directive('backImg', function(){
     return function(scope, element, attrs){

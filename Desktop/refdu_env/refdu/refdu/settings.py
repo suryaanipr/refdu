@@ -91,7 +91,7 @@ STATICFILES_DIRS = (
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'refdu',
+        'NAME': 'refdu2',
         'USER': 'root',
         'PASSWORD': '1234',
         'HOST': 'localhost',
@@ -129,7 +129,7 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.CryptPasswordHasher',
 )
 
-
+FACEBOOK_SECRET = "59f787c47c05e737c2bcf66e8de34acb"
 #STATIC_ROOT=os.path.join(BASE_DIR,"static/")
 
 TEMPLATE_DIRS = (

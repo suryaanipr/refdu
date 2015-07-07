@@ -5,6 +5,7 @@ from django.conf.urls import patterns, include, url
 from views import *
 
 urlpatterns = patterns('authentication.views',
-    url(r'^register$', Register.as_view()),
-    url(r'^login$', Login.as_view()),
+    url(r'^register$', register),
+    url(r'^login$',login),
+    url(r'^get_user_data', UserData.as_view()),
 )

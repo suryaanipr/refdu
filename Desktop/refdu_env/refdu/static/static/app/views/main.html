@@ -1,0 +1,19 @@
+		<!-- BEGIN LOGIN SECTION -->
+
+        <section class="section-account" xmlns="http://www.w3.org/1999/html">
+        	<div class="img-backdrop" back-img="static/img/img16.jpg" ></div>
+			<div class="spacer"></div>
+
+        <div class="card contain-sm style-transparent">
+				<div class="card-body">
+					<div class="row">
+						<div class="col-sm-6">
+                            <div>[[ email ]]</div>
+                            <input type="button" value="logout" ng-click="logout()">
+                            <div ng-if="role == 'co'"> this is company page</div>
+                            <div ng-if="role == 'cu'">this is customer page</div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </section>
