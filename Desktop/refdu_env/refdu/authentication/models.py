@@ -36,7 +36,7 @@ class Token(models.Model):
         payload = {
             'sub': str(userid),
             'iat': datetime.now(),
-            'exp': datetime.now() + timedelta(days=14)
+            'exp': datetime.now() + timedelta(days=20)
         }
         token = jwt.encode(payload, SECRET_KEY)
         return token.decode('unicode_escape')

@@ -17,37 +17,54 @@ def json_response(response_dict, status=200):
     response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
-def parse_token(req):
+def parse_token(token):
+
+    """token_data = req.META.get('HTTP_AUTHORIZATION').split()
+    if len(token_data) == 1:
+        token = token_data[0]
+    else:
+        token = token_data[1]
+
     print '------------parse token-----------'
-    print req.headers
-    token = req.headers.get('Authorization').split()[1]
-    return jwt.decode(token, SECRET_KEY)
+    print token"""
+    return jwt.decode(str(token), SECRET_KEY)
 
 def token_required(func):
     def inner(request, *args, **kwargs):
         if request.method == 'OPTIONS':
             return func(request, *args, **kwargs)
-        #print request.META.get('HTTP_AUTHORIZATION', None)
+        print request.META
         auth_header = request.META.get('HTTP_AUTHORIZATION', None)
+        print '-----------auth header-----------'
+        print auth_header
         if auth_header is not None:
             tokens = auth_header.split(' ')
+            print '-------tokens------'
             print tokens
             if len(tokens) == 2 and tokens[0] == 'Bearer':
                 token = tokens[1]
-                print '-------------'
-                print token
-                try:
-                    request.token = Token.objects.get(token=token)
-                    payload = parse_token(request)
-                    if datetime.fromtimestamp(payload['exp']) < datetime.now():
-                        return json_response({
-                        'error': 'Token Expired'
-                        }, status=401)
-                    return func(request, *args, **kwargs)
-                except Token.DoesNotExist:
+            elif len(tokens)==1:
+                token = tokens[0]
+            else:
+                return json_response({
+                    'error': 'Token not found'
+                }, status=401)
+            try:
+                request.token = Token.objects.get(token=token)
+                print '-------request token--------'
+                print request.token
+
+                payload = parse_token(request.token)
+                if datetime.fromtimestamp(payload['exp']) < datetime.now():
                     return json_response({
-                        'error': 'Token not found'
+                    'error': 'Token Expired'
                     }, status=401)
+                return func(request, *args, **kwargs)
+            except Token.DoesNotExist:
+                return json_response({
+                    'error': 'Token not found'
+                }, status=401)
+
         return json_response({
             'error': 'Invalid Header'
         }, status=401)
@@ -128,18 +145,13 @@ def login(request):
 
         if email is not None and password is not None:
             person_obj = Person.objects.filter(email = body['email'])
-                #
-            from django.core import serializers
-            data = json.loads(serializers.serialize('json',person_obj,
-                                                    fields=('email','password', 'role', 'id')))
-
             if person_obj is not None:
-                if check_password(password, data[0]['fields']['password']):
-                    token, created = Token.objects.get_or_create(user=person_obj)
+                if check_password(password,  person_obj[0].password):
+                    token, created = Token.objects.get_or_create(user=person_obj[0])
                     return json_response({
                         'token': token.token,
-                        'email': data[0]['fields']['email'],
-                        'role': data[0]['fields']['role']
+                        'email': person_obj[0].email,
+                        'role': person_obj[0].role
                     })
                 else:
                     return json_response({
@@ -164,11 +176,17 @@ def login(request):
         }, status=405)
 
 
-@csrf_exempt
 @token_required
 def logout(request):
     if request.method == 'POST':
-        request.token.delete()
+        print '--------request body---------'
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        token = body['token']
+        delete_row = Token.objects.get(token = token)
+        delete_row.delete()
+        #print request.META.get('HTTP_AUTHORIZATION', None)
+        #print request.token
         return json_response({
             'status': 'success'
         })
@@ -178,8 +196,3 @@ def logout(request):
         return json_response({
             'error': 'Invalid Method'
         }, status=405)
-
-@token_required
-def testing_on_token(request):
-    print 'this is now old better then the gaminsdf'
-    return HttpResponse('so this token workking is corect')

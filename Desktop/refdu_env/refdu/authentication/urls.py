@@ -8,5 +8,5 @@ urlpatterns = patterns('authentication.views',
     url(r'^register$', register),
     url(r'^login$',login),
     url(r'^get_user_data', UserData.as_view()),
-    url(r'^test', testing_on_token),
+    url(r'^logout', logout),
 )

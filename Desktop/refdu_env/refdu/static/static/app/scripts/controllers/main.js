@@ -17,11 +17,10 @@ angular.module('sampleAppApp')
       return $auth.isAuthenticated();
     };
     if ($auth.isAuthenticated()){
-        $http({
+        /*$http({
             method: 'POST',
             url: '/auth/test',
             headers: {
-                'Authorization': $auth.getToken(),
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
             },
             data: {
@@ -30,12 +29,28 @@ angular.module('sampleAppApp')
         })
         .success(function (out) {
             console.log(out)
-        })
+        })*/
 
     }
 
    $scope.logout = function(){
         $rootScope = null;
+        $http({
+            method: 'POST',
+            url: '/auth/logout',
+            headers: {
+                'authorization': $auth.getToken(),
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            data:{
+                'token': $auth.getToken()
+            }
+
+        })
+        .success(function (out) {
+            console.log(out)
+        })
+
         $auth.logout();
    }
 });
