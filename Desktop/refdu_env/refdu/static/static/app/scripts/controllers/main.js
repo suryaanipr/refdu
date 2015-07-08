@@ -19,9 +19,10 @@ angular.module('sampleAppApp')
     if ($auth.isAuthenticated()){
         $http({
             method: 'POST',
-            url: '/auth/get_user_data',
+            url: '/auth/test',
             headers: {
-                'Content-Type': 'application/json'
+                'Authorization': $auth.getToken(),
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
             },
             data: {
                 'token' : $auth.getToken()

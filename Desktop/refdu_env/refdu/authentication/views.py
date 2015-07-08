@@ -5,9 +5,11 @@ from models import Person, Token
 from django.contrib.auth.hashers import *
 from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError
-from refdu.settings import FACEBOOK_SECRET
-import requests
+from refdu.settings import FACEBOOK_SECRET, SECRET_KEY
+import requests, jwt
 from urlparse import parse_qs, parse_qsl
+from datetime import datetime
+
 
 def json_response(response_dict, status=200):
     response = HttpResponse(json.dumps(response_dict), content_type="application/json", status=status)
@@ -15,17 +17,32 @@ def json_response(response_dict, status=200):
     response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
+def parse_token(req):
+    print '------------parse token-----------'
+    print req.headers
+    token = req.headers.get('Authorization').split()[1]
+    return jwt.decode(token, SECRET_KEY)
+
 def token_required(func):
     def inner(request, *args, **kwargs):
         if request.method == 'OPTIONS':
             return func(request, *args, **kwargs)
+        #print request.META.get('HTTP_AUTHORIZATION', None)
         auth_header = request.META.get('HTTP_AUTHORIZATION', None)
         if auth_header is not None:
             tokens = auth_header.split(' ')
-            if len(tokens) == 2 and tokens[0] == 'Token':
+            print tokens
+            if len(tokens) == 2 and tokens[0] == 'Bearer':
                 token = tokens[1]
+                print '-------------'
+                print token
                 try:
                     request.token = Token.objects.get(token=token)
+                    payload = parse_token(request)
+                    if datetime.fromtimestamp(payload['exp']) < datetime.now():
+                        return json_response({
+                        'error': 'Token Expired'
+                        }, status=401)
                     return func(request, *args, **kwargs)
                 except Token.DoesNotExist:
                     return json_response({
@@ -161,3 +178,8 @@ def logout(request):
         return json_response({
             'error': 'Invalid Method'
         }, status=405)
+
+@token_required
+def testing_on_token(request):
+    print 'this is now old better then the gaminsdf'
+    return HttpResponse('so this token workking is corect')
