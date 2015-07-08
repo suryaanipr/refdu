@@ -100,6 +100,10 @@ angular
             templateUrl: 'static/app/views/create_password.html',
             controller: 'create_passwordCtrl',
           })
+          .when('/activate/:token', {
+            templateUrl: 'static/app/views/activation.html',
+            controller: 'activationCtrl',
+          })
           .otherwise({
             redirectTo: '/'
           });

@@ -17,9 +17,9 @@ angular.module('sampleAppApp')
       return $auth.isAuthenticated();
     };
     if ($auth.isAuthenticated()){
-        /*$http({
+        $http({
             method: 'POST',
-            url: '/auth/test',
+            url: '/auth/get_user_data',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
             },
@@ -29,8 +29,9 @@ angular.module('sampleAppApp')
         })
         .success(function (out) {
             console.log(out)
-        })*/
-
+            $rootScope.email = out.email;
+            $rootScope.role = out.role;
+        })
     }
 
    $scope.logout = function(){

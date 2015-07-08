@@ -9,4 +9,6 @@ urlpatterns = patterns('authentication.views',
     url(r'^login$',login),
     url(r'^get_user_data', UserData.as_view()),
     url(r'^logout', logout),
+    url(r'^mail', send_activation_link),
+    url(r'^activate', activate_link),
 )

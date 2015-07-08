@@ -15,8 +15,9 @@ class Person(models.Model):
         ('Cu', 'Customer'),
         ('Co', 'Company'),
     )
-
     role = models.CharField(null=False, default=" ", max_length=200, choices=ROLES)
+    isActive = models.BooleanField(default=False)
+    activate_token = models.CharField(null=False, default=" ", max_length=250)
 
 
 

@@ -44,6 +44,28 @@ angular.module('sampleAppApp')
 
 
 })
+.controller('activationCtrl',function ($scope, $http, $routeParams) {
+    if(typeof $routeParams.token !== 'undefined'){
+        $http({
+            method: 'POST',
+            url: '/auth/activate',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            data: {
+                'token' : $routeParams.token
+            },
+        })
+        .success(function (out) {
+            console.log(out)
+            $scope.activation_status = 'successfully activated';
+        })
+        .error(function(out){
+            console.log(out)
+            $scope.activation_status = out.error;
+        })
+    }
+})
 .directive('backImg', function(){
     return function(scope, element, attrs){
         var url = attrs.backImg;

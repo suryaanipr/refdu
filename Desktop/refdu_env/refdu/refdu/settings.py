@@ -140,3 +140,9 @@ TEMPLATE_DIRS = (
 STATICFILES_DIRS = (
         os.path.join(BASE_DIR, "static", "static"),
 )
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'dlpstaffs@gmail.com'
+EMAIL_HOST_PASSWORD = 'qwertas.12'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True

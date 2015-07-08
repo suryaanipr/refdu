@@ -8,8 +8,8 @@ from django.db import IntegrityError
 from refdu.settings import FACEBOOK_SECRET, SECRET_KEY
 import requests, jwt
 from urlparse import parse_qs, parse_qsl
-from datetime import datetime
-
+from datetime import datetime, timedelta
+from django.core.mail import EmailMultiAlternatives, send_mail
 
 def json_response(response_dict, status=200):
     response = HttpResponse(json.dumps(response_dict), content_type="application/json", status=status)
@@ -18,15 +18,6 @@ def json_response(response_dict, status=200):
     return response
 
 def parse_token(token):
-
-    """token_data = req.META.get('HTTP_AUTHORIZATION').split()
-    if len(token_data) == 1:
-        token = token_data[0]
-    else:
-        token = token_data[1]
-
-    print '------------parse token-----------'
-    print token"""
     return jwt.decode(str(token), SECRET_KEY)
 
 def token_required(func):
@@ -70,8 +61,6 @@ def token_required(func):
         }, status=401)
 
     return inner
-# gettering information of facebook account
-
 
 class UserData(View):
     def get(self, request):
@@ -80,13 +69,31 @@ class UserData(View):
 
     def post(self,request):
         try:
+            from django.db import connection
+            cursor = connection.cursor()
             body_unicode = request.body.decode('utf-8')
             body = json.loads(body_unicode)
-            token_pk_field = Token.objects.get(token= body['token']).values()
-            print token_pk_field
-            return HttpResponse('method not allowed')
+            query = 'select p.email, p.role,p.id, t.token from authentication_person p,authentication_token t where t.user_id = p.id and t.token ="'+body['token']+'";'
+            cursor.execute(query)
+            row = cursor.fetchone()
+            person_obj = {
+                "email": row[0],
+                "role":  row[1],
+                "id":    row[2],
+                "token": row[3]
+            }
+            return HttpResponse(json.dumps(person_obj))
         except Exception as e:
             return HttpResponse('bad token')
+
+def create_token(userid):
+        payload = {
+            'sub': str(userid),
+            'iat': datetime.now(),
+            'exp': datetime.now() + timedelta(days=15)
+        }
+        token = jwt.encode(payload, SECRET_KEY)
+        return token.decode('unicode_escape')
 
 def register(request):
     if request.method == 'POST':
@@ -110,12 +117,19 @@ def register(request):
                     else:
                         obj = Person(email= email, password= make_password(password),role= account_type)
                         obj.save()
+                else:
+                    return json_response({
+                    'error': 'unable to process'
+                }, status=400)
+
 
             except IntegrityError:
                 return json_response({
                     'error': 'User already exists'
                 }, status=400)
+
             token = Token.objects.create(user=obj)
+            send_activation_link(obj.id, obj.email)
             return json_response({
                 'token': token.token,
                 'useremail': obj.email,
@@ -132,6 +146,23 @@ def register(request):
             'error': 'Invalid Method'
         }, status=405)
 
+@csrf_exempt
+def send_activation_link(id=None, email=None):
+    print '-------id--------', id, email
+    token = create_token(id)
+    subject = 'user activation information'
+    content = 'please click <a href="http://127.0.0.1:8000/#/activate/'+token+'">here</a> to activate your account'
+    from_email = "refdu@gmail.com"
+    to = email
+    msg = EmailMultiAlternatives(subject,'user activation link', from_email, [to])
+    msg.attach_alternative(content, "text/html")
+    if msg.send():
+        data = Person.objects.get(id=id)
+        data.activate_token = token
+        data.save()
+        return True
+    else:
+        return False
 
 
 
@@ -196,3 +227,31 @@ def logout(request):
         return json_response({
             'error': 'Invalid Method'
         }, status=405)
+
+@csrf_exempt
+def activate_link(request):
+    if request.method == 'POST':
+        try:
+            print '--------request body---------'
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            token = body['token']
+            payload = parse_token(token)
+            if datetime.fromtimestamp(payload['exp']) < datetime.now():
+                return json_response({
+                'error': 'Token Expired'
+                }, status=401)
+            data = Person.objects.get(id=payload['sub'])
+            if data.activate_token == token:
+                data.isActive = True
+                data.save()
+                return json_response({
+                    'status': 'activated successfully'
+                }, status=200)
+            return json_response({
+                'error': 'token doesnot matched'
+                }, status=401)
+        except Exception as e:
+            return json_response({
+                'error': 'bad request'
+                }, status=401)
