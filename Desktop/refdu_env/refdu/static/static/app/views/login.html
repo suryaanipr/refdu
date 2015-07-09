@@ -10,9 +10,7 @@
 							<br/>
                             <span class="text-lg text-bold text-primary">MATERIAL ADMIN</span>
 							<br/><br/>
-                             <button type="button" ng-click="login()" ng-hide="isLoggedIn" class="btn btn-default navbar-btn">
-                                Login
-                            </button>
+
 
 							<form class="form floating-label" accept-charset="utf-8" method="post" name="myForm">
 
@@ -49,8 +47,17 @@
 											</label>
 										</div>
 									</div><!--end .col -->
+                                    <div class="col-xs-6 text-left" >
+										<div class="checkbox checkbox-inline checkbox-styled">
+											<label>
+												<a href="#/forgot_password">forgot password</a>
+											</label>
+										</div>
+									</div><!--end .col -->
 									<div class="col-xs-6 text-right">
-										<button class="btn btn-primary btn-raised" type="submit" ng-click="doLogin()">Login</button>
+										<button class="btn btn-primary btn-raised" type="submit" ng-click="doLogin()">
+                                            Login
+                                        </button>
 									</div><!--end .col -->
 								</div><!--end .row -->
 							</form>
@@ -72,11 +79,8 @@
 										or
 									</h3>
 									<p>
-
+										<a href="#" class="btn btn-block btn-raised btn-info" ng-click="login()"><i class="fa fa-twitter pull-left"></i>Login with Facebook</a>
 									</p>
-									<!--<p>
-										<a href="#" class="btn btn-block btn-raised btn-info"><i class="fa fa-twitter pull-left"></i>Login with Twitter</a>
-									</p>-->
 								</div><!--end .col -->
 							</div><!--end .row -->
 						</div><!--end .card-body -->

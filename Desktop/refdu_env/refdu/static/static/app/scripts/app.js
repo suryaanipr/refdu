@@ -85,6 +85,17 @@ angular
 			}
 
           })
+          .when('/forgot_password', {
+            templateUrl: 'static/app/views/forgot_password.html',
+            controller: 'forgotCtrl',
+            resolve: {
+					authenticated: function($location, $auth) {
+						if (($auth.isAuthenticated())) {
+							return $location.path('/home');
+						}
+					}
+			}
+          })
           .when('/register', {
             templateUrl: 'static/app/views/register.html',
             controller: 'registerCtrl',
@@ -103,6 +114,10 @@ angular
           .when('/activate/:token', {
             templateUrl: 'static/app/views/activation.html',
             controller: 'activationCtrl',
+          })
+          .when('/activate_forgot/:token', {
+            templateUrl: 'static/app/views/enter_password.html',
+            controller: 'enter_passwordCtrl',
           })
           .otherwise({
             redirectTo: '/'

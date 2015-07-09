@@ -11,4 +11,6 @@ urlpatterns = patterns('authentication.views',
     url(r'^logout', logout),
     url(r'^mail', send_activation_link),
     url(r'^activate', activate_link),
+    url(r'^send_forgot_link', send_forgot_link),
+    url(r'^update_forgot_password', update_forgot_password),
 )

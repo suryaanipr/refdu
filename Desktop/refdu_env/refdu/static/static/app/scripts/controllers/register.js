@@ -8,7 +8,7 @@
  * Controller of the sampleAppApp
  */
 angular.module('sampleAppApp')
-  .controller('registerCtrl',function ($scope, $http, $auth, $rootScope, $location) {
+  .controller('registerCtrl',function ($scope, $auth, $rootScope, $location) {
     console.log('registerCtrl');
     $scope.registration_status = " ";
 

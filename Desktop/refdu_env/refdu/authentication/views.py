@@ -18,7 +18,8 @@ def json_response(response_dict, status=200):
     return response
 
 def parse_token(token):
-    return jwt.decode(str(token), SECRET_KEY)
+    options = { 'verify_exp': False }
+    return jwt.decode(str(token), SECRET_KEY, options=options)
 
 def token_required(func):
     def inner(request, *args, **kwargs):
@@ -46,6 +47,7 @@ def token_required(func):
                 print request.token
 
                 payload = parse_token(request.token)
+
                 if datetime.fromtimestamp(payload['exp']) < datetime.now():
                     return json_response({
                     'error': 'Token Expired'
@@ -90,7 +92,7 @@ def create_token(userid):
         payload = {
             'sub': str(userid),
             'iat': datetime.now(),
-            'exp': datetime.now() + timedelta(days=15)
+            'exp': datetime.now() + timedelta(seconds=50)
         }
         token = jwt.encode(payload, SECRET_KEY)
         return token.decode('unicode_escape')
@@ -129,7 +131,8 @@ def register(request):
                 }, status=400)
 
             token = Token.objects.create(user=obj)
-            send_activation_link(obj.id, obj.email)
+            if not body['password_change']:
+                send_activation_link(obj.id, obj.email, 'activate')
             return json_response({
                 'token': token.token,
                 'useremail': obj.email,
@@ -147,20 +150,26 @@ def register(request):
         }, status=405)
 
 @csrf_exempt
-def send_activation_link(id=None, email=None):
+def send_activation_link(id=None, email=None, request_type=None):
     print '-------id--------', id, email
     token = create_token(id)
     subject = 'user activation information'
-    content = 'please click <a href="http://127.0.0.1:8000/#/activate/'+token+'">here</a> to activate your account'
+    content = 'please click ' \
+              '<a href="http://127.0.0.1:8000/#/'+request_type+'/'+token+'">' \
+              'here</a>' \
+              'to activate your account'
     from_email = "refdu@gmail.com"
     to = email
     msg = EmailMultiAlternatives(subject,'user activation link', from_email, [to])
     msg.attach_alternative(content, "text/html")
     if msg.send():
-        data = Person.objects.get(id=id)
-        data.activate_token = token
-        data.save()
-        return True
+        person_data = Person.objects.get(id=id)
+
+        obj, created = Token.objects.get_or_create(user=person_data)
+        print '--------token created----------'
+        print obj, created
+        
+
     else:
         return False
 
@@ -168,44 +177,49 @@ def send_activation_link(id=None, email=None):
 
 @csrf_exempt
 def login(request):
-    if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-        email = body['email']
-        password = body['password']
+    try:
+        if request.method == 'POST':
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            email = body['email']
+            password = body['password']
 
-        if email is not None and password is not None:
-            person_obj = Person.objects.filter(email = body['email'])
-            if person_obj is not None:
-                if check_password(password,  person_obj[0].password):
-                    token, created = Token.objects.get_or_create(user=person_obj[0])
-                    return json_response({
-                        'token': token.token,
-                        'email': person_obj[0].email,
-                        'role': person_obj[0].role
-                    })
+            if email is not None and password is not None:
+                person_obj = Person.objects.get(email = body['email'])
+                if person_obj is not None and not person_obj:
+                    if check_password(password,  person_obj.password):
+                        token, created = Token.objects.get_or_create(user=person_obj)
+                        return json_response({
+                            'token': token.token,
+                            'email': person_obj.email,
+                            'role': person_obj.role
+                        })
+                    else:
+                        return json_response({
+                            'error': 'Invalid Password'
+                        }, status=400)
                 else:
                     return json_response({
-                        'error': 'Invalid Username/Password'
+                        'error': 'Invalid User'
                     }, status=400)
+
+
             else:
                 return json_response({
-                    'error': 'Invalid User'
+                    'error': 'Invalid Data'
                 }, status=400)
 
-
+        elif request.method == 'OPTIONS':
+            return json_response({})
         else:
             return json_response({
-                'error': 'Invalid Data'
-            }, status=400)
-
-    elif request.method == 'OPTIONS':
-        return json_response({})
-    else:
+                'error': 'Invalid Method'
+            }, status=405)
+    except Exception as e:
+        print e
         return json_response({
-            'error': 'Invalid Method'
+                'error': 'account does not exits'
         }, status=405)
-
 
 @token_required
 def logout(request):
@@ -228,6 +242,10 @@ def logout(request):
             'error': 'Invalid Method'
         }, status=405)
 
+class Networkerror(RuntimeError):
+   def __init__(self, arg):
+      self.args = arg
+
 @csrf_exempt
 def activate_link(request):
     if request.method == 'POST':
@@ -237,21 +255,97 @@ def activate_link(request):
             body = json.loads(body_unicode)
             token = body['token']
             payload = parse_token(token)
-            if datetime.fromtimestamp(payload['exp']) < datetime.now():
-                return json_response({
-                'error': 'Token Expired'
-                }, status=401)
             data = Person.objects.get(id=payload['sub'])
+
+            if data.isActive == True:
+                return json_response({
+                'status': 'alredy activated'
+                }, status=200)
+
+            if datetime.fromtimestamp(payload['exp']) < datetime.now():
+                send_activation_link(data.id, data.email, 'activate')
+                return json_response({
+                    'error': 'Signature has expired and new link send your email'+data.email
+                }, status=401)
+            #data = Person.objects.get(id=payload['sub'])
             if data.activate_token == token:
                 data.isActive = True
                 data.save()
                 return json_response({
                     'status': 'activated successfully'
                 }, status=200)
+
             return json_response({
                 'error': 'token doesnot matched'
                 }, status=401)
+
         except Exception as e:
-            return json_response({
-                'error': 'bad request'
+            if str(e) == "Signature has expired":
+                return json_response({
+                    'error': 'Signature has expired'
                 }, status=401)
+            else:
+                return json_response({
+                'error': 'invalid token'
+                }, status=401)
+
+def send_forgot_link(request):
+    try:
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        email = body['email']
+        data = Person.objects.get(email=email)
+        send_activation_link(data.id, data.email, 'activate_forgot')
+        return json_response({
+                    'status': 'the forgot password link send to this email id'+data.email
+        }, status=200)
+
+    except Exception as e:
+        print e
+        return json_response({
+                    'error': 'no account found by this email'
+        }, status=401)
+
+def update_forgot_password(request):
+    try:
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        password = body['password']
+        token = body['token']
+        payload = parse_token(token)
+        print payload
+        if payload:
+            data = Token.objects.get(user_id=payload['sub'])
+            print '----------------'
+            print data.token
+            print token
+            rs = check_token(token, data, payload)
+            print '---check token details--', rs
+            if rs == 1:
+                return json_response({
+                        'error': 'the token did not match'
+                }, status=401)
+            if rs == 2:
+                send_activation_link(data.id, data.email, 'activate_forgot')
+                return json_response({
+                        'error': 'token expired please check your mail new mail has been sent'
+                }, status=401)
+            if rs == 3:
+                data.password = make_password(password)
+                data.save()
+                return json_response({
+                        'status': 'password successfully updated'
+                }, status=200)
+    except Exception as e:
+        print e
+        return json_response({
+                    'error': 'token mismatch'
+        }, status=401)
+
+def check_token(token, user_obj, payload):
+
+    if user_obj.token != token:
+        return 1    #token mismatch
+    if datetime.fromtimestamp(payload['exp']) < datetime.now():
+        return 2    #token expired
+    return 3        # all is good

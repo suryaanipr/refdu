@@ -9,8 +9,10 @@
  */
 angular.module('sampleAppApp')
 
-  .controller('LoginCtrl', function ($scope, $http, $location, $rootScope, $auth, $facebook) {
-
+  .controller('LoginCtrl', function ($scope, $location, $rootScope, $auth, $facebook) {
+    $scope.forgot_password = function(){
+        console.log('forgot password')
+    }
     $scope.doLogin = function(){
         //$scope.login_status = "  ";
         //$scope.login_error = "";
@@ -51,7 +53,7 @@ angular.module('sampleAppApp')
         //refresh();
 
 })
-.controller('create_passwordCtrl', function ($scope, $http, $location, $rootScope, $auth, $facebook) {
+.controller('create_passwordCtrl', function ($scope, $location, $rootScope, $auth) {
     console.log('create_passwordCtrl')
     if(typeof $rootScope.email == 'undefined'){
         $location.path("/");
@@ -80,7 +82,56 @@ angular.module('sampleAppApp')
                 });
             }
         }
-});
+})
+.controller('forgotCtrl', function ($scope, $http) {
+    $scope.send_forgot_link = function(){
+        console.log($scope.formData.email)
+        if(typeof $scope.formData.email != 'undefined'){
+             $http({
+                method: 'POST',
+                url: '/auth/send_forgot_link',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                data: {
+                    'email' : $scope.formData.email
+                },
+            })
+            .success(function (out) {
+                console.log(out)
+            })
+            .error(function(out){
+                console.log(out)
+            })
+        }
+    }
+})
+.controller('enter_passwordCtrl', function ($scope, $http, $routeParams) {
+    $scope.update_forgot_password = function(){
+        console.log($scope.formData.email)
+        if(typeof $scope.formData.password != 'undefined' &&
+           typeof $routeParams.token !== 'undefined'){
+
+             $http({
+                method: 'POST',
+                url: '/auth/update_forgot_password',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                data: {
+                    'token' : $routeParams.token,
+                    'password': $scope.formData.password
+                },
+            })
+            .success(function (out) {
+                console.log(out)
+            })
+            .error(function(out){
+                console.log(out)
+            })
+        }
+    }
+})
 
 
 
